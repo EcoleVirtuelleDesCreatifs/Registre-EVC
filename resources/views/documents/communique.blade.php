@@ -48,7 +48,7 @@
     $citation = trim(str_replace('«', '', preg_replace('/»(?=\s*(?:<[^>]+>\s*)*$)/', '', $citation)));
     // Mise à l'échelle automatique si le contenu est long (évite tout chevauchement).
     $chars = mb_strlen(strip_tags($lead.implode(' ', $corps).$citation.implode(' ', array_map(fn ($x) => $x['t'].' '.$x['d'], $dispositions))));
-    $fit = $chars > 1050 ? 'cm-xs' : ($chars > 650 ? 'cm-md' : ($chars > 350 ? 'cm-sm' : ''));
+    $fit = $chars > 820 ? 'cm-xs' : ($chars > 460 ? 'cm-md' : ($chars > 290 ? 'cm-sm' : ''));
     // Hauteur estimée de l'encadré Référence/Objet/Destinataires (~28 car./ligne/cellule) + marge avant le contenu.
     $metaLines = max(1, (int) ceil(max(
         mb_strlen($c['reference'] ?: 'attribuée à la délivrance') / 28,
