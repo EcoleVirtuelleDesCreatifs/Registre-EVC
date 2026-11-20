@@ -1,0 +1,6 @@
+# Planificateur Laravel (sauvegarde quotidienne 02:30, etc.)
+# cPanel › Tâches Cron › « Une fois par minute » :
+* * * * * cd /home/UTILISATEUR/evc-registre && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1
+
+# Si l'hébergeur limite la fréquence, une exécution quotidienne suffit :
+# 30 2 * * * cd /home/UTILISATEUR/evc-registre && /usr/local/bin/php artisan evc:backup >> /dev/null 2>&1

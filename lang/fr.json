@@ -1,0 +1,19 @@
+{
+    "(and :count more error)": "(et :count autre erreur)",
+    "(and :count more errors)": "(et :count autres erreurs)",
+    "The given data was invalid.": "Les données fournies sont invalides.",
+    "Unauthenticated.": "Authentification requise.",
+    "This action is unauthorized.": "Action non autorisée.",
+    "Too Many Attempts.": "Trop de tentatives.",
+    "Not Found": "Introuvable",
+    "Server Error": "Erreur du serveur",
+    "Page Expired": "Page expirée",
+    "Forbidden": "Accès refusé",
+    "Service Unavailable": "Service indisponible",
+    "Previous": "Précédent",
+    "Next": "Suivant",
+    "Showing": "Affichage",
+    "to": "à",
+    "of": "sur",
+    "results": "résultats"
+}

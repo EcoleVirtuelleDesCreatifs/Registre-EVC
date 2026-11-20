@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin
+Disallow: /verifier
+
+Sitemap: https://verification.ecolevirtuelledescreatifs.com/sitemap.xml
