@@ -4,6 +4,8 @@
     </IfModule>
 
     RewriteEngine On
+    # Hébergement LWS : le site est servi depuis evc-registre/public via le .htaccess racine
+    RewriteBase /evc-registre/public/
 
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

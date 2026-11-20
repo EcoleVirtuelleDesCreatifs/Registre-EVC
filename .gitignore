@@ -11,9 +11,5 @@
 /storage/app/dompdf-fonts/
 /storage/app/dompdf-tmp/
 /storage/app/backup-*.sql
-/storage/framework/cache/
-/storage/framework/sessions/
-/storage/framework/views/
-/storage/logs/
 /public/hot
 .env.production

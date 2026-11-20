@@ -1,0 +1,6 @@
+# À placer dans htdocs/verification.ecolevirtuelledescreatifs.com/.htaccess
+# (le dossier qui contient evc-registre/). Envoie toutes les requêtes vers Laravel.
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_URI} !^/evc-registre/public/
+RewriteRule ^(.*)$ /evc-registre/public/$1 [L]
