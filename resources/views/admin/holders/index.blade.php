@@ -22,9 +22,9 @@
                     <td>{{ $h->documents_count }}</td>
                     @can('holders.manage')
                         <td style="text-align:right">
-                            <form method="POST" action="{{ route('admin.beneficiaires.destroy', $h) }}" style="margin:0" onsubmit="return confirm('Supprimer définitivement {{ $h->full_name }} ?')">
+                            <form method="POST" action="{{ route('admin.beneficiaires.destroy', $h) }}" style="margin:0" onsubmit="return confirm({{ \Illuminate\Support\Js::from('Supprimer définitivement '.$h->full_name.($h->documents_count ? ' et son brouillon'.($h->documents_count > 1 ? 's' : '').' ('.$h->documents_count.')' : '').' ?') }})">
                                 @csrf @method('DELETE')
-                                <button class="btn danger" type="submit" @disabled($h->documents_count > 0) @if ($h->documents_count > 0) title="Ce titulaire a des documents : suppression impossible" @endif>Supprimer</button>
+                                <button class="btn danger" type="submit" @disabled($h->blocking_count > 0) @if ($h->blocking_count > 0) title="Ce titulaire a des documents délivrés ou en cours de validation : suppression impossible" @endif>Supprimer</button>
                             </form>
                         </td>
                     @endcan

@@ -208,4 +208,30 @@ class RegistreTest extends TestCase
         $this->actingAs($this->user('secretariat'))->get('/admin/statistiques?periode=7')
             ->assertOk()->assertSee('Statistiques de consultation')->assertSee('Pages vues');
     }
+
+    public function test_holder_with_only_drafts_can_be_deleted(): void
+    {
+        $user = $this->user('secretariat');
+        $trashed = $this->draft('certificat', 'DG');
+        $holder = $trashed->holder;
+        $trashed->delete(); // brouillon déjà supprimé depuis la liste
+        OfficialDocument::create(['document_type_id' => $trashed->document_type_id, 'holder_id' => $holder->id,
+            'formation' => 'DG', 'status' => 'brouillon', 'source' => 'manuel', 'pdf_public' => true]);
+
+        $this->actingAs($user)->delete('/admin/beneficiaires/'.$holder->id)
+            ->assertRedirect('/admin/beneficiaires')->assertSessionHas('status');
+        $this->assertModelMissing($holder);
+        $this->assertSame(0, OfficialDocument::withTrashed()->where('holder_id', $holder->id)->count());
+    }
+
+    public function test_holder_with_delivered_document_cannot_be_deleted(): void
+    {
+        $doc = $this->draft('certificat', 'DG');
+        $doc->update(['status' => 'publie', 'reference' => 'EVC-DG-2026-0098', 'issued_at' => now()]);
+
+        $this->actingAs($this->user('secretariat'))->from('/admin/beneficiaires/'.$doc->holder_id)
+            ->delete('/admin/beneficiaires/'.$doc->holder_id)
+            ->assertSessionHasErrors('holder');
+        $this->assertModelExists($doc->holder);
+    }
 }

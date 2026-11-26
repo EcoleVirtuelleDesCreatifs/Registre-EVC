@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DocumentHolder;
+use App\Models\OfficialDocument;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
@@ -21,7 +23,8 @@ class HolderController extends Controller
         }
 
         return view('admin.holders.index', [
-            'holders' => DocumentHolder::search($request->input('q'))->withCount('documents')
+            'holders' => DocumentHolder::search($request->input('q'))->withCount(['documents',
+                'documents as blocking_count' => fn ($q) => $q->withTrashed()->where(fn ($w) => $w->whereNotNull('reference')->orWhere('status', '!=', 'brouillon'))])
                 ->orderBy('full_name')->paginate(30)->withQueryString(),
         ]);
     }
@@ -89,13 +92,29 @@ class HolderController extends Controller
     {
         Gate::authorize('holders.manage');
 
-        if ($holder->documents()->exists()) {
-            return back()->withErrors(['holder' => 'Impossible de supprimer '.$holder->full_name.' : ce titulaire a des documents au registre.']);
+        // Bloquant : tout document engagé dans la délivrance (référence attribuée ou statut au-delà du brouillon)
+        $docs = $holder->documents()->withTrashed()->get();
+        $blocking = $docs->filter(fn (OfficialDocument $d) => $d->reference || $d->status !== 'brouillon');
+        if ($blocking->isNotEmpty()) {
+            return back()->withErrors(['holder' => 'Impossible de supprimer '.$holder->full_name.' : '
+                .$blocking->count().' document(s) engagé(s) dans la délivrance ('
+                .$blocking->map(fn ($d) => $d->reference ?? config("evc.statuses.{$d->status}", $d->status))->implode(', ')
+                .'). Un document délivré ne se supprime pas : il se révoque depuis son dossier.']);
+        }
+        if ($docs->whereNull('deleted_at')->isNotEmpty()) {
+            Gate::authorize('documents.edit');
         }
 
         $name = $holder->full_name;
-        $holder->delete();
-        AuditLogger::log('titulaire_supprime', 'Titulaire supprimé : '.$name);
+        DB::transaction(function () use ($holder, $docs) {
+            // Les brouillons (actifs ou déjà supprimés) partent avec le titulaire
+            foreach ($docs as $doc) {
+                AuditLogger::log('suppression_brouillon', 'Brouillon supprimé avec le titulaire '.$holder->full_name, $doc);
+                $doc->forceDelete();
+            }
+            $holder->delete();
+        });
+        AuditLogger::log('titulaire_supprime', 'Titulaire supprimé : '.$name.($docs->count() ? ' (avec '.$docs->count().' brouillon(s))' : ''));
 
         return redirect()->route('admin.beneficiaires.index')->with('status', 'Titulaire supprimé : '.$name.'.');
     }
