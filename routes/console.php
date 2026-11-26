@@ -59,4 +59,7 @@ Artisan::command('evc:reset-2fa {email}', function (string $email) {
 })->purpose('Réinitialiser la double authentification d’un utilisateur (téléphone perdu)');
 
 // Tâche planifiée : sauvegarde chaque nuit à 2 h 30 (cron : * * * * * php artisan schedule:run)
+// Mesure d'audience : conservation 13 mois
+Schedule::call(fn () => \App\Models\SiteVisit::where('created_at', '<', now()->subMonths(13))->delete())->dailyAt('03:15')->name('evc:purge-visites');
+
 Schedule::command('evc:backup')->dailyAt('02:30')->withoutOverlapping();

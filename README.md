@@ -11,7 +11,7 @@ Application Laravel 11 · PHP 8.2+ · MySQL 8 (ou MariaDB 10.6+).
 
 | Côté public | Côté administration |
 |---|---|
-| Vérification par référence (`EVC-DG-2026-0007`) ou par QR code | Tableau de bord et statistiques de délivrance |
+| Vérification par référence (`EVC-DG-2026-0007`) ou par QR code | Tableau de bord, statistiques de délivrance et statistiques de consultation du site (sans cookie) |
 | Résultats : **valide**, **révoqué**, **introuvable**, **indisponible** | Circuit de validation en 5 étapes, avec séparation des responsabilités |
 | Consultation et téléchargement du PDF officiel (si autorisé) | Numérotation automatique, unique et sans réemploi |
 | Politique de confidentialité | Bénéficiaires, liste des étudiants par document (regroupement, recherche, impression, CSV), import Excel/CSV contrôlé ligne par ligne |

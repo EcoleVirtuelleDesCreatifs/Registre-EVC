@@ -64,12 +64,25 @@
     .sbd-empty{padding:40px 20px;text-align:center;color:var(--muted);background:#fff;border:1px dashed var(--line);border-radius:14px;margin-top:16px}
     mark{background:var(--gold-l);color:inherit;border-radius:3px;padding:0 1px}
 
+    .sbd-act{white-space:nowrap;text-align:right}
+    .sbd-del{font:inherit;font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:8px;border:1px solid #f0c9c5;background:#fff;color:var(--bad);cursor:pointer}
+    .sbd-del:hover{background:var(--bad);color:#fff;border-color:var(--bad)}
+    .sbd-lock{font-size:12px;color:var(--muted);text-decoration:none;border:1px dashed var(--line);border-radius:8px;padding:5px 9px}
+    .sbd-lock:hover{color:var(--navy);border-color:var(--gold)}
+    .sbd-ck{width:16px;height:16px;accent-color:var(--navy);cursor:pointer}
+    tr.sel td{background:#fdf6e8}
+    .sbd-card.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-l)}
+    .sbd-bulk{display:none;align-items:center;gap:10px;background:var(--navy);color:#fff;border-radius:10px;padding:8px 10px 8px 14px;font-size:13.5px}
+    .sbd-bulk.on{display:inline-flex}
+    .sbd-bulk button{font:inherit;font-size:13px;font-weight:600;border:0;border-radius:8px;padding:6px 12px;cursor:pointer}
+    .sbd-bulk .go{background:#fff;color:var(--bad)}
+    .sbd-bulk .no{background:transparent;color:var(--gold-l)}
     .sbd-print{display:none}
     @media (max-width:760px){.sbd-count{margin-left:0;width:100%}}
     @media print{
         @page{size:A4;margin:14mm}
         body{background:#fff}
-        .top,.side,.sbd-types,.sbd-filters,.sbd-chips,.sbd-tools,.sbd-noprint,.alert{display:none!important}
+        .top,.side,.sbd-types,.sbd-filters,.sbd-chips,.sbd-tools,.sbd-noprint,.sbd-act,.sbd-ckc,.alert{display:none!important}
         .adm{display:block}.adm main{padding:0;max-width:none}
         .sbd-print{display:block;border-bottom:2px solid var(--navy);padding-bottom:8px;margin-bottom:10px}
         .sbd-print .t{font-family:"Libre Baskerville",serif;font-size:18px;color:var(--navy)}
@@ -195,8 +208,14 @@
                 <button type="button" data-view="table" title="Affichage en liste">☰ Liste</button>
                 <button type="button" data-view="cards" title="Affichage en cartes">▦ Cartes</button>
             </div>
+            <span class="sbd-bulk" id="sbd-bulk" aria-live="polite">
+                <span id="sbd-bulk-n"></span>
+                <button type="button" class="go" id="sbd-bulk-go">Supprimer la sélection</button>
+                <button type="button" class="no" id="sbd-bulk-no">Annuler</button>
+            </span>
             <span class="sbd-count" id="sbd-count" aria-live="polite"></span>
         </div>
+        <form method="POST" action="{{ route('admin.par-document.destroy') }}" id="sbd-del-form" hidden>@csrf @method('DELETE')</form>
 
         <div id="sbd-results"></div>
         <noscript>
@@ -215,6 +234,8 @@
     const STATUSES = @json(config('evc.statuses'));
     const FORMATIONS = @json(config('evc.formations'));
     const KEY = 'evc.parDocument';
+    const CAN_DELETE = DATA.some((r) => r.can_delete);
+    const selected = new Set();
 
     const $ = (id) => document.getElementById(id);
     const els = { q: $('sbd-q'), group: $('sbd-group'), sort: $('sbd-sort'), count: $('sbd-count'), out: $('sbd-results') };
@@ -284,10 +305,18 @@
         return a.localeCompare(b, 'fr', { numeric: true });
     }
 
+    const actionHtml = (r) => r.can_delete
+        ? `<button type="button" class="sbd-del" data-del="${r.id}" data-name="${esc(r.name)}" title="Supprimer ce dossier (brouillon)">🗑 Supprimer</button>`
+        : `<a class="sbd-lock" href="${esc(r.url)}" title="${r.reference ? 'Document délivré : il ne peut pas être supprimé. Ouvrez le dossier pour le révoquer.' : 'Dossier en cours de validation : ouvrez-le pour le traiter.'}">🔒 ${r.reference ? 'Révoquer…' : 'Ouvrir'}</a>`;
+    const ckHtml = (r) => r.can_delete ? `<input type="checkbox" class="sbd-ck" data-ck="${r.id}" ${selected.has(r.id) ? 'checked' : ''} aria-label="Sélectionner ${esc(r.name)}">` : '';
+
     function tableHtml(rows) {
+        const deletable = rows.filter((r) => r.can_delete);
+        const all = deletable.length && deletable.every((r) => selected.has(r.id));
         return `<div class="card"><table>
-            <thead><tr><th>Étudiant</th><th>Promotion</th><th>Formation</th><th>Référence</th><th>Délivré le</th><th>Statut</th><th class="sbd-noprint">PDF</th></tr></thead>
-            <tbody>${rows.map((r) => `<tr>
+            <thead><tr>${CAN_DELETE ? `<th class="sbd-ckc" style="width:34px">${deletable.length ? `<input type="checkbox" class="sbd-ck" data-ckall="${deletable.map((r) => r.id).join(',')}" ${all ? 'checked' : ''} aria-label="Tout sélectionner">` : ''}</th>` : ''}<th>Étudiant</th><th>Promotion</th><th>Formation</th><th>Référence</th><th>Délivré le</th><th>Statut</th><th class="sbd-noprint">PDF</th><th class="sbd-act"></th></tr></thead>
+            <tbody>${rows.map((r) => `<tr class="${selected.has(r.id) ? 'sel' : ''}">
+                ${CAN_DELETE ? `<td class="sbd-ckc">${ckHtml(r)}</td>` : ''}
                 <td><div class="sbd-who"><span class="sbd-av" style="background:${color(r.name)}">${esc(initials(r.name))}</span>
                     <div>${r.holder_url ? `<a href="${esc(r.holder_url)}"><strong>${hl(r.name)}</strong></a>` : `<strong>${hl(r.name)}</strong>`}
                     ${r.matricule || r.email ? `<small>${hl(r.matricule || '')}${r.matricule && r.email ? ' · ' : ''}${hl(r.email || '')}</small>` : ''}</div></div></td>
@@ -297,12 +326,13 @@
                 <td class="sbd-num">${esc(r.issued_fr || '—')}</td>
                 <td>${pill(r)}</td>
                 <td class="sbd-noprint">${r.pdf ? '<span class="fileinfo">✓</span>' : '<span class="fileinfo none">manquant</span>'}</td>
+                <td class="sbd-act">${actionHtml(r)}</td>
             </tr>`).join('')}</tbody></table></div>`;
     }
 
     function cardsHtml(rows) {
-        return `<div class="sbd-grid">${rows.map((r) => `<article class="sbd-card">
-            <div class="sbd-who"><span class="sbd-av" style="background:${color(r.name)}">${esc(initials(r.name))}</span>
+        return `<div class="sbd-grid">${rows.map((r) => `<article class="sbd-card ${selected.has(r.id) ? 'sel' : ''}">
+            <div class="sbd-who">${CAN_DELETE ? `<span class="sbd-ckc">${ckHtml(r)}</span>` : ''}<span class="sbd-av" style="background:${color(r.name)}">${esc(initials(r.name))}</span>
                 <div><div class="nm">${hl(r.name)}</div>${r.matricule ? `<small>${hl(r.matricule)}</small>` : ''}</div></div>
             <dl>
                 <dt>Référence</dt><dd class="sbd-num">${ref(r)}</dd>
@@ -311,6 +341,7 @@
                 <dt>Délivré le</dt><dd>${esc(r.issued_fr || '—')}</dd>
             </dl>
             <div class="foot">${pill(r)}<span><a href="${esc(r.url)}">Dossier</a>${r.holder_url ? ` · <a href="${esc(r.holder_url)}">Fiche</a>` : ''}</span></div>
+            ${r.can_delete ? `<div class="sbd-act" style="text-align:left">${actionHtml(r)}</div>` : ''}
         </article>`).join('')}</div>`;
     }
 
@@ -323,6 +354,7 @@
         const students = new Set(rows.map((r) => r.holder_id)).size;
         els.count.textContent = `${students} étudiant${students > 1 ? 's' : ''} · ${rows.length} / ${DATA.length} document${DATA.length > 1 ? 's' : ''}`;
         segBtns.forEach((b) => b.classList.toggle('on', b.dataset.view === state.view));
+        updateBulk();
 
         if (!rows.length) {
             els.out.innerHTML = `<div class="sbd-empty">${DATA.length ? 'Aucun étudiant ne correspond à cette recherche.' : 'Aucun document de ce type pour ces critères.'}</div>`;
@@ -349,7 +381,39 @@
         }).join('');
     }
 
+    function updateBulk() {
+        const bar = $('sbd-bulk');
+        bar.classList.toggle('on', selected.size > 0);
+        $('sbd-bulk-n').textContent = `${selected.size} dossier${selected.size > 1 ? 's' : ''} sélectionné${selected.size > 1 ? 's' : ''}`;
+    }
+
+    function submitDelete(ids, message) {
+        if (!ids.length || !window.confirm(message)) return;
+        const f = $('sbd-del-form');
+        f.querySelectorAll('input[name="ids[]"]').forEach((i) => i.remove());
+        ids.forEach((id) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = 'ids[]'; i.value = id; f.appendChild(i); });
+        f.submit();
+    }
+
+    els.out.addEventListener('change', (e) => {
+        const c = e.target;
+        if (c.dataset.ckall !== undefined) {
+            c.dataset.ckall.split(',').map(Number).forEach((id) => c.checked ? selected.add(id) : selected.delete(id));
+            render();
+        } else if (c.dataset.ck !== undefined) {
+            const id = Number(c.dataset.ck);
+            c.checked ? selected.add(id) : selected.delete(id);
+            render();
+        }
+    });
+
+    $('sbd-bulk-no').addEventListener('click', () => { selected.clear(); render(); });
+    $('sbd-bulk-go').addEventListener('click', () => submitDelete([...selected],
+        `Supprimer ${selected.size} dossier${selected.size > 1 ? 's' : ''} ?\n\nSeuls les brouillons sans référence sont supprimés. L’opération est enregistrée dans l’historique.`));
+
     els.out.addEventListener('click', (e) => {
+        const del = e.target.closest('[data-del]');
+        if (del) { submitDelete([Number(del.dataset.del)], `Supprimer le dossier de ${del.dataset.name} ?\n\nCe brouillon disparaîtra de la liste. L’opération est enregistrée dans l’historique.`); return; }
         const h = e.target.closest('.sbd-gh');
         if (!h) return;
         const sec = h.parentElement, k = sec.dataset.k;

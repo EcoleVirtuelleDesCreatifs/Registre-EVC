@@ -17,6 +17,9 @@
         <h2 class="serif" style="font-weight:400;color:var(--navy);font-size:20px">Journal des vérifications</h2>
         <p>Chaque consultation est enregistrée (date, référence saisie, résultat) avec une empreinte chiffrée et irréversible de l’adresse IP, afin de détecter les tentatives de fraude et les recherches automatisées. Le nombre de consultations est limité.</p>
 
+        <h2 class="serif" style="font-weight:400;color:var(--navy);font-size:20px">Mesure d’audience</h2>
+        <p>Le registre établit ses propres statistiques de fréquentation (pages consultées, type d’appareil et de navigateur, langue, site de provenance), sans cookie ni outil tiers. Aucune adresse IP n’est conservée : seule une empreinte chiffrée et irréversible permet de compter les visiteurs. Ces données sont réservées à l’EVC et supprimées au bout de 13 mois.</p>
+
         <h2 class="serif" style="font-weight:400;color:var(--navy);font-size:20px">Conservation</h2>
         <p>Les documents délivrés restent inscrits au registre pour permettre leur vérification dans la durée. Un document annulé reste visible comme « révoqué » et sa référence n’est jamais réattribuée.</p>
 

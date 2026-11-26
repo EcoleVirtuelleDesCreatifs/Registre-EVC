@@ -176,4 +176,36 @@ class RegistreTest extends TestCase
         $this->actingAs($user)->get('/admin/etudiants-par-document/export?type=certificat')
             ->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
     }
+
+    public function test_drafts_can_be_deleted_from_students_list_but_not_delivered_documents(): void
+    {
+        $draft = $this->draft('certificat', 'DG');
+        $delivered = $this->draft('certificat', 'CM');
+        $delivered->update(['status' => 'publie', 'reference' => 'EVC-CM-2026-0099', 'issued_at' => now()]);
+        $user = $this->user('secretariat');
+
+        $this->actingAs($user)->from('/admin/etudiants-par-document')
+            ->delete('/admin/etudiants-par-document', ['ids' => [$draft->id, $delivered->id]])
+            ->assertRedirect('/admin/etudiants-par-document')
+            ->assertSessionHas('status')
+            ->assertSessionHasErrors('ids');
+
+        $this->assertSoftDeleted($draft);
+        $this->assertNotSoftDeleted($delivered);
+    }
+
+    public function test_public_visits_are_counted_without_ip_and_shown_in_stats(): void
+    {
+        $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/604.1', 'Accept-Language' => 'fr-FR,fr;q=0.9'])
+            ->get('/')->assertOk();
+        $this->withHeaders(['User-Agent' => 'Googlebot/2.1'])->get('/');
+
+        $this->assertSame(1, \App\Models\SiteVisit::count());
+        $visit = \App\Models\SiteVisit::first();
+        $this->assertSame(['accueil', 'mobile', 'iOS', 'fr'], [$visit->page, $visit->device, $visit->os, $visit->lang]);
+        $this->assertSame(64, strlen($visit->visitor_hash));
+
+        $this->actingAs($this->user('secretariat'))->get('/admin/statistiques?periode=7')
+            ->assertOk()->assertSee('Statistiques de consultation')->assertSee('Pages vues');
+    }
 }

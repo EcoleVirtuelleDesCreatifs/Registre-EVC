@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\StudentsByDocumentController;
 use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ValidationController;
+use App\Http\Controllers\Admin\VisitStatsController;
 use App\Http\Controllers\PublicController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,10 +20,12 @@ use Illuminate\Support\Facades\Route;
 | Registre public
 |--------------------------------------------------------------------------
 */
-Route::get('/', [PublicController::class, 'index'])->name('public.index');
-Route::get('/confidentialite', [PublicController::class, 'privacy'])->name('public.privacy');
+Route::middleware('track')->group(function () {
+    Route::get('/', [PublicController::class, 'index'])->name('public.index');
+    Route::get('/confidentialite', [PublicController::class, 'privacy'])->name('public.privacy');
+});
 
-Route::middleware('throttle:verification')->group(function () {
+Route::middleware(['throttle:verification', 'track'])->group(function () {
     Route::post('/verifier', [PublicController::class, 'check'])->name('public.check');
     Route::get('/verifier', fn () => redirect()->route('public.index'));
     Route::get('/v/{reference}', [PublicController::class, 'show'])->name('public.show');
@@ -84,6 +87,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
             // Étudiants par document
             Route::get('/etudiants-par-document', [StudentsByDocumentController::class, 'index'])->name('par-document.index');
             Route::get('/etudiants-par-document/export', [StudentsByDocumentController::class, 'export'])->name('par-document.export');
+            Route::delete('/etudiants-par-document', [StudentsByDocumentController::class, 'destroy'])->name('par-document.destroy');
+
+            // Statistiques de consultation du registre public
+            Route::get('/statistiques', [VisitStatsController::class, 'index'])->name('stats.visits');
 
             // Import Excel / CSV
             Route::get('/import', [ImportController::class, 'create'])->name('imports.create');

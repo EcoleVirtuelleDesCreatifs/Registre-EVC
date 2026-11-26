@@ -52,6 +52,7 @@
             </div>
             <div class="card" style="margin-top:16px">
                 <h2>Vérifications publiques (30 jours)</h2>
+                <p class="small" style="margin:-4px 0 10px"><a href="{{ route('admin.stats.visits') }}">Voir les statistiques détaillées du site →</a></p>
                 <div class="kv">
                     <span class="k">Total</span><span class="v">{{ $verif['total30'] }}</span>
                     <span class="k">Valides</span><span class="v">{{ $verif['valides30'] }}</span>

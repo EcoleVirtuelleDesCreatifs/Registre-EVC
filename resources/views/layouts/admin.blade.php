@@ -24,6 +24,7 @@
                 ->count();
             $nav = [
                 ['Tableau de bord', 'admin.dashboard', 'stats.view', 'admin.dashboard'],
+                ['Statistiques du site', 'admin.stats.visits', 'stats.view', 'admin.stats.*'],
                 ['Nouveau document', 'admin.documents.create', 'documents.create', 'admin.documents.create'],
                 ['Registre des documents', 'admin.documents.index', 'documents.view', 'admin.documents.index|admin.documents.show|admin.documents.edit'],
                 ['Bénéficiaires', 'admin.beneficiaires.index', 'documents.view', 'admin.beneficiaires.*'],

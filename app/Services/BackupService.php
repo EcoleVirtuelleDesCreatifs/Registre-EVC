@@ -16,7 +16,7 @@ class BackupService
 {
     public const TABLES = [
         'users', 'document_types', 'document_holders', 'official_documents', 'document_sequences',
-        'document_approvals', 'document_audit_logs', 'document_revocations', 'verifications',
+        'document_approvals', 'document_audit_logs', 'document_revocations', 'verifications', 'site_visits',
     ];
 
     public function directory(): string

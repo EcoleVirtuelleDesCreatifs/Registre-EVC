@@ -4,6 +4,7 @@ use App\Http\Middleware\ApiToken;
 use App\Http\Middleware\EnsureTwoFactor;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\TrackVisit;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => EnsureUserIsActive::class,
             '2fa' => EnsureTwoFactor::class,
             'api.token' => ApiToken::class,
+            'track' => TrackVisit::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
