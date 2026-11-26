@@ -27,6 +27,7 @@
                 ['Nouveau document', 'admin.documents.create', 'documents.create', 'admin.documents.create'],
                 ['Registre des documents', 'admin.documents.index', 'documents.view', 'admin.documents.index|admin.documents.show|admin.documents.edit'],
                 ['Bénéficiaires', 'admin.beneficiaires.index', 'documents.view', 'admin.beneficiaires.*'],
+                ['Étudiants par document', 'admin.par-document.index', 'documents.view', 'admin.par-document.*'],
                 ['Validations', 'admin.validations.index', 'documents.view', 'admin.validations.*'],
                 ['Import Excel / CSV', 'admin.imports.create', 'imports.drafts', 'admin.imports.*'],
             ];

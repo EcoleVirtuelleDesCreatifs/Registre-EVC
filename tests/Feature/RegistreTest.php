@@ -157,4 +157,23 @@ class RegistreTest extends TestCase
         $this->assertStringContainsString('SPÉCIMEN', $html);
         $this->assertStringContainsString('11 février 2026', $html);
     }
+
+    public function test_students_by_document_lists_holders_per_type(): void
+    {
+        $this->draft('certificat', 'DG');
+        $this->draft('recommandation', null)->holder->update(['full_name' => 'Yao Kouassi']);
+        $user = $this->user('secretariat');
+
+        $this->actingAs($user)->get('/admin/etudiants-par-document?type=certificat')
+            ->assertOk()
+            ->assertSee('Étudiants par document')
+            ->assertSee('Awa Koné')
+            ->assertDontSee('Yao Kouassi');
+
+        $this->actingAs($user)->get('/admin/etudiants-par-document?type=recommandation')
+            ->assertOk()->assertSee('Yao Kouassi');
+
+        $this->actingAs($user)->get('/admin/etudiants-par-document/export?type=certificat')
+            ->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
 }

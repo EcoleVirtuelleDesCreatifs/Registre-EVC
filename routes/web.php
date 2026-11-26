@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\HolderController;
 use App\Http\Controllers\Admin\ImportController;
+use App\Http\Controllers\Admin\StudentsByDocumentController;
 use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ValidationController;
@@ -79,6 +80,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             // Bénéficiaires
             Route::resource('beneficiaires', HolderController::class)->parameters(['beneficiaires' => 'holder']);
+
+            // Étudiants par document
+            Route::get('/etudiants-par-document', [StudentsByDocumentController::class, 'index'])->name('par-document.index');
+            Route::get('/etudiants-par-document/export', [StudentsByDocumentController::class, 'export'])->name('par-document.export');
 
             // Import Excel / CSV
             Route::get('/import', [ImportController::class, 'create'])->name('imports.create');
