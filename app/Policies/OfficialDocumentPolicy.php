@@ -86,8 +86,20 @@ class OfficialDocumentPolicy
     }
 
     /** Suppression : uniquement un brouillon jamais soumis (protection contre la suppression définitive). */
+    /**
+     * Suppression d'un dossier : jamais après l'attribution d'une référence (un document délivré se révoque).
+     * Brouillon ou rejeté : toute personne habilitée à modifier. En cours de circuit : Direction générale uniquement.
+     */
     public function delete(User $user, OfficialDocument $doc): bool
     {
-        return $user->hasPermission('documents.edit') && $doc->status === 'brouillon' && ! $doc->reference;
+        if ($doc->reference) {
+            return false;
+        }
+
+        return match ($doc->status) {
+            'brouillon', 'rejete' => $user->hasPermission('documents.edit'),
+            'en_verification', 'approuve' => $user->hasPermission('documents.approve'),
+            default => false,
+        };
     }
 }

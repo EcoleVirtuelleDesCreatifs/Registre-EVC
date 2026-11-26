@@ -74,7 +74,7 @@ class StudentsByDocumentController extends Controller
             'pdf' => (bool) $d->pdf_path,
             'url' => route('admin.documents.show', $d),
             'holder_url' => $d->holder ? route('admin.beneficiaires.show', $d->holder) : null,
-            'can_delete' => Gate::allows('delete', $d),
+            'can_delete' => in_array($d->status, ['brouillon', 'rejete'], true) && Gate::allows('delete', $d),
         ])->values();
 
         // Répartition par formation pour le type sélectionné
@@ -134,7 +134,7 @@ class StudentsByDocumentController extends Controller
 
     /**
      * Suppression d'un ou plusieurs dossiers depuis la liste.
-     * Seuls les brouillons sans référence sont supprimables (suppression douce, journalisée) :
+     * Seuls les dossiers sans référence sont supprimables (selon le rôle) (suppression douce, journalisée) :
      * un document délivré ne se supprime jamais, il se révoque depuis son dossier.
      */
     public function destroy(Request $request)
@@ -148,12 +148,12 @@ class StudentsByDocumentController extends Controller
         $deleted = 0;
         $refused = [];
         foreach (OfficialDocument::with('holder')->whereIn('id', $ids)->get() as $doc) {
-            if (Gate::denies('delete', $doc)) {
+            if (! in_array($doc->status, ['brouillon', 'rejete'], true) || Gate::denies('delete', $doc)) {
                 $refused[] = $doc->holder?->full_name ?? '#'.$doc->id;
 
                 continue;
             }
-            AuditLogger::log('suppression_brouillon', 'Brouillon supprimé (liste des étudiants) : '.($doc->holder?->full_name ?? '#'.$doc->id), $doc);
+            AuditLogger::log('suppression_dossier', 'Dossier supprimé (liste des étudiants) : '.($doc->holder?->full_name ?? '#'.$doc->id), $doc);
             $doc->delete(); // suppression douce : la ligne reste en base
             $deleted++;
         }
@@ -163,7 +163,7 @@ class StudentsByDocumentController extends Controller
             $redirect->with('status', $deleted.' dossier'.($deleted > 1 ? 's' : '').' supprimé'.($deleted > 1 ? 's' : '').'.');
         }
         if ($refused) {
-            $redirect->withErrors(['ids' => 'Non supprimé'.(count($refused) > 1 ? 's' : '').' (document déjà engagé dans la délivrance — utilisez la révocation depuis le dossier) : '.implode(', ', array_slice($refused, 0, 10)).(count($refused) > 10 ? '…' : '')]);
+            $redirect->withErrors(['ids' => 'Non supprimé'.(count($refused) > 1 ? 's' : '').' (référence déjà attribuée, ou dossier en cours de validation : supprimez-le depuis la page Validations) : '.implode(', ', array_slice($refused, 0, 10)).(count($refused) > 10 ? '…' : '')]);
         }
 
         return $redirect;

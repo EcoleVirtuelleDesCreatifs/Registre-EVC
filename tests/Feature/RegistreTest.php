@@ -234,4 +234,18 @@ class RegistreTest extends TestCase
             ->assertSessionHasErrors('holder');
         $this->assertModelExists($doc->holder);
     }
+
+    public function test_document_in_validation_can_be_deleted_by_direction_with_reason(): void
+    {
+        $doc = $this->draft('certificat', 'DG');
+        $doc->update(['status' => 'en_verification']);
+
+        $this->actingAs($this->user('secretariat'))->delete('/admin/documents/'.$doc->id, ['motif' => 'Doublon'])->assertForbidden();
+
+        $dg = $this->user('direction_generale');
+        $dg->forceFill(['two_factor_secret' => 'TEST', 'two_factor_confirmed_at' => now()])->save();
+        $this->actingAs($dg)->withSession(['2fa_passed' => true])->from('/admin/validations')
+            ->delete('/admin/documents/'.$doc->id, [])->assertSessionHasErrors('motif');
+        $this->assertNotSoftDeleted($doc);
+    }
 }

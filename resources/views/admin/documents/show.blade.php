@@ -157,9 +157,16 @@
             @endcan
 
             @can('delete', $document)
-                <form method="POST" action="{{ route('admin.documents.destroy', $document) }}" style="margin-top:16px" onsubmit="return confirm('Supprimer ce brouillon ?')">
+                @php $inCircuit = in_array($document->status, ['en_verification', 'approuve'], true); @endphp
+                <form method="POST" action="{{ route('admin.documents.destroy', $document) }}" style="margin-top:16px" onsubmit="return confirm('Supprimer ce dossier ? L’opération est enregistrée dans l’historique.')">
                     @csrf @method('DELETE')
-                    <button class="btn danger" type="submit">Supprimer le brouillon</button>
+                    @if ($inCircuit)
+                        <label class="small" style="display:block;margin-bottom:6px">Motif de la suppression (obligatoire)
+                            <textarea class="f" name="motif" rows="2" required maxlength="500" style="width:100%;margin-top:4px"></textarea>
+                        </label>
+                        @error('motif')<div class="err-text">{{ $message }}</div>@enderror
+                    @endif
+                    <button class="btn danger" type="submit">Supprimer {{ $document->status === 'brouillon' ? 'le brouillon' : 'le dossier' }}</button>
                 </form>
             @endcan
 

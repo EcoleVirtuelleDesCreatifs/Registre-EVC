@@ -163,10 +163,21 @@ class DocumentController extends Controller
     public function destroy(OfficialDocument $document)
     {
         Gate::authorize('delete', $document);
-        AuditLogger::log('suppression_brouillon', 'Brouillon supprimé', $document);
+        $inCircuit = in_array($document->status, ['en_verification', 'approuve'], true);
+        $motif = request()->validate([
+            'motif' => [$inCircuit ? 'required' : 'nullable', 'string', 'max:500'],
+        ], ['motif.required' => 'Indiquez le motif de la suppression d’un dossier en cours de validation.'])['motif'] ?? null;
+
+        $name = $document->holder?->full_name ?? 'dossier n° '.$document->id;
+        AuditLogger::log('suppression_dossier', 'Dossier supprimé ('.$document->statusLabel().') : '.$name.($motif ? ' — motif : '.$motif : ''), $document);
         $document->delete(); // suppression douce : la ligne reste en base
 
-        return redirect()->route('admin.documents.index')->with('status', 'Brouillon supprimé.');
+        // Retour à la page d'origine (validations, liste…), sauf si c'était la fiche du dossier supprimé
+        $previous = url()->previous();
+        $target = str_contains($previous, '/documents/'.$document->id) || $previous === url()->current()
+            ? route('admin.documents.index') : $previous;
+
+        return redirect()->to($target)->with('status', 'Dossier de '.$name.' supprimé.');
     }
 
     /** Joindre le PDF signé et/ou l'aperçu. */

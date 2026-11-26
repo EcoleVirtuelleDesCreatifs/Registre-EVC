@@ -306,7 +306,7 @@
     }
 
     const actionHtml = (r) => r.can_delete
-        ? `<button type="button" class="sbd-del" data-del="${r.id}" data-name="${esc(r.name)}" title="Supprimer ce dossier (brouillon)">🗑 Supprimer</button>`
+        ? `<button type="button" class="sbd-del" data-del="${r.id}" data-name="${esc(r.name)}" title="Supprimer ce dossier (aucune référence attribuée)">🗑 Supprimer</button>`
         : `<a class="sbd-lock" href="${esc(r.url)}" title="${r.reference ? 'Document délivré : il ne peut pas être supprimé. Ouvrez le dossier pour le révoquer.' : 'Dossier en cours de validation : ouvrez-le pour le traiter.'}">🔒 ${r.reference ? 'Révoquer…' : 'Ouvrir'}</a>`;
     const ckHtml = (r) => r.can_delete ? `<input type="checkbox" class="sbd-ck" data-ck="${r.id}" ${selected.has(r.id) ? 'checked' : ''} aria-label="Sélectionner ${esc(r.name)}">` : '';
 
@@ -409,11 +409,11 @@
 
     $('sbd-bulk-no').addEventListener('click', () => { selected.clear(); render(); });
     $('sbd-bulk-go').addEventListener('click', () => submitDelete([...selected],
-        `Supprimer ${selected.size} dossier${selected.size > 1 ? 's' : ''} ?\n\nSeuls les brouillons sans référence sont supprimés. L’opération est enregistrée dans l’historique.`));
+        `Supprimer ${selected.size} dossier${selected.size > 1 ? 's' : ''} ?\n\nSeuls les dossiers sans référence sont supprimés. L’opération est enregistrée dans l’historique.`));
 
     els.out.addEventListener('click', (e) => {
         const del = e.target.closest('[data-del]');
-        if (del) { submitDelete([Number(del.dataset.del)], `Supprimer le dossier de ${del.dataset.name} ?\n\nCe brouillon disparaîtra de la liste. L’opération est enregistrée dans l’historique.`); return; }
+        if (del) { submitDelete([Number(del.dataset.del)], `Supprimer le dossier de ${del.dataset.name} ?\n\nCe dossier disparaîtra de la liste. L’opération est enregistrée dans l’historique.`); return; }
         const h = e.target.closest('.sbd-gh');
         if (!h) return;
         const sec = h.parentElement, k = sec.dataset.k;
